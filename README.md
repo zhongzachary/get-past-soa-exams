@@ -12,7 +12,7 @@ You might also need some basic knowledge on how to run a `R Markdown` in `RStudi
 - Run all the cells except the last 2 cells.
 - In the second-to-last cell, change the exam name to the exam you want to download.
   - The provided code is trying to download all files for Exam PA. You can change it to other exams.
-    ```{R}
+    ```{r}
     # change Exam PA to your exam in the cell
     download.files.data <- files.data %>% filter(exam == 'Exam PA')  
     ```
