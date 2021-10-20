@@ -25,7 +25,7 @@ url <- 'https://www.soa.org/education/exam-req/syllabus-study-materials/edu-mult
 doc <- read_html(url)
 ```
 
-## Get all the exam season
+## Get all the exam seasons
 ```{r}
 seasons <- doc %>% html_nodes(xpath = "////a[starts-with(@href, '/globalassets/assets/files/edu/')]/ancestor::tbody")
 seasons.names <- seasons %>% map(~{.x %>% html_nodes(xpath = 'tr[1]/td[1]') %>% html_text() %>% str_extract('\\w+\\s\\d{4}')})
