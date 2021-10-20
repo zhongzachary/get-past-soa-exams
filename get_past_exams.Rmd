@@ -1,0 +1,161 @@
+---
+title: "Download Past SOA Exams"
+author: "Shanghao Zhong"
+date: "10/20/2021"
+output: html_document
+---
+
+# Load packages
+Install required packages if they are not installed.
+```{r}
+require.packages <- c('rvest', 'tidyverse')
+install.packages(require.packages[!is.element(require.packages, installed.packages())])
+rm(require.packages)
+```
+
+Load packages.
+```{r}
+library(rvest)
+library(tidyverse)
+```
+
+# Web Scraping
+```{r}
+url <- 'https://www.soa.org/education/exam-req/syllabus-study-materials/edu-multiple-choice-exam'
+doc <- read_html(url)
+```
+
+## Get all the exam season
+```{r}
+seasons <- doc %>% html_nodes(xpath = "////a[starts-with(@href, '/globalassets/assets/files/edu/')]/ancestor::tbody")
+seasons.names <- seasons %>% map(~{.x %>% html_nodes(xpath = 'tr[1]/td[1]') %>% html_text() %>% str_extract('\\w+\\s\\d{4}')})
+```
+
+Get all the exams in a season.
+```{r}
+ifnull <- function(string, string2) {
+  # if `string` is null, return `string2`, else return `string` instead
+  if(identical(string, character(0)) || is.na(string)) {
+    return(string2)
+  } else {
+    return(string)
+  }
+}
+
+getExamName <- function(season.node) {
+  # get the exam name from one of the node in `seasons`. 
+  
+  # since SOA's website has inconsistent structure, it will try a couple things to get the exam name.
+  td.nodes <- season.node %>% html_nodes(xpath = "descendant-or-self::a/ancestor::td")
+  exams <- td.nodes %>% map(~{
+      .x %>% html_nodes('strong') %>% html_text() %>% ifnull(
+        .x %>% html_nodes(xpath = 'ul/li[1]/a') %>% html_attr('title') %>% ifnull(
+          .x %>% html_nodes(xpath = 'ul/li[1]/a') %>% html_text()
+        )
+      )
+    }) %>% unlist()
+  
+  # get exam versions, like exam dates.
+  versions <- season.node %>% 
+    html_nodes(xpath = "descendant-or-self::a/ancestor::tbody/tr[2]/th") %>% 
+    html_text() %>% str_extract('\\w* \\d*, \\d{4}') %>% 
+    parse_date("%B %d, %Y") %>% format("%m%d")
+  
+  if(length(versions) == 0) {
+    versions <- c(NA)
+  }
+  
+  return(data.frame(exam = exams, version = versions))
+}
+
+seasons.exams <- seasons %>% map(~getExamName(.x)) 
+```
+
+Create a list of exams.
+```{r}
+exam.list <- map2_dfr(seasons.names, seasons.exams, ~{data.frame(season = .x, .y)})
+```
+
+Do some clean up.
+```{r}
+exam.data <- exam.list %>%
+  mutate(year = str_extract(season, "\\d{4}") %>% parse_integer(),
+         season = str_extract(season, "\\w+"),
+         version = coalesce(version, str_extract(exam, "(Morning)|(Afternoon)")),
+         exam = exam %>% str_replace('.*ERM.*', 'Exam ERM') %>% str_extract("Exam \\w+(( |–)\\w+)*")) %>%
+  relocate(year, .before = season)
+```
+
+## Get all the file links
+Get all the nodes with file links.
+```{r}
+hrefs <- doc %>% html_nodes(xpath = "////a[starts-with(@href, '/globalassets/assets/files/edu/')]/ancestor::td")
+```
+
+Get all the files and links.
+```{r}
+links <- hrefs %>% map(~{
+  data.frame(file=.x %>% html_nodes(xpath = 'descendant-or-self::a') %>% html_text(),
+             link=.x %>% html_nodes(xpath = 'descendant-or-self::a') %>% html_attr('href'))
+})
+```
+
+Create a data frame of all files.
+```{r}
+files.data <- map2_dfr(
+  split(exam.data, seq(nrow(exam.data))), 
+  links, 
+  ~{data.frame(.x %>% `rownames<-`(NULL), .y)})
+```
+
+Remove intermediate variables.
+```{r}
+rm(list = setdiff(ls(), 'files.data'))
+```
+
+# Download Files
+Create a function that download all files in the `df`.
+```{r}
+download.files <- function(df) {
+  for(i in seq(nrow(df))) {
+    link <- str_glue('https://www.soa.org', df[i, 'link'])
+    folder <- str_glue(df[i, 'exam'] %>% str_replace(' ', '-'), df[i, 'year'], df[i, 'season'], .sep = "_")
+    if(!is.na(df[i, 'version'])) {
+      folder <- str_glue(folder, '_', df[i, 'version'])
+    }
+    file.name <- link %>% str_split('/') %>% unlist() %>% last()
+    path <- file.path(folder, file.name)
+    
+    # create folder
+    dir.create(folder, showWarnings = FALSE)
+    
+    # download file
+    download.file(link, path)
+  }
+}
+```
+
+## What you can download
+Here are all the available exams.
+```{r}
+files.data %>% select(exam) %>% unique() %>% arrange(exam)
+```
+
+You can also see all the available exam sittings. (It will open a new tab in RStudio.)
+```{r}
+files.data %>% select(year, season, exam, version) %>% unique() %>% View()
+```
+
+## Download the files
+Here, it downloads all the files for Exam PA. You can also change the code to download the things you want. (It will open a new tab in RStudio.)
+```{r}
+download.files.data <- files.data %>% filter(exam == 'Exam PA')
+View(download.files.data)
+```
+
+Use `download.files` to get all the exam files.
+Files will be downloaded to the same location as this R project. 
+There will be one folder for each exam sitting.
+```{r eval=FALSE}
+download.files.data %>% download.files()
+```
