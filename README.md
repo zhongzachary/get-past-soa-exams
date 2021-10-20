@@ -1,4 +1,4 @@
-# Get Past SOA Exams
+# Get All Exams Released by SOA
 
 Have you got tired of clicking all the links in SOA's website to download all the past exams? You come to the right place.
 
