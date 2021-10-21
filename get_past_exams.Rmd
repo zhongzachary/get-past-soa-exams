@@ -27,7 +27,7 @@ doc <- read_html(url)
 
 ## Get all the exam seasons
 ```{r}
-seasons <- doc %>% html_nodes(xpath = "////a[starts-with(@href, '/globalassets/assets/files/edu/')]/ancestor::tbody")
+seasons <- doc %>% html_nodes(xpath = "//a[starts-with(@href, '/globalassets/assets/files/edu/')]/ancestor::tbody")
 seasons.names <- seasons %>% map(~{.x %>% html_nodes(xpath = 'tr[1]/td[1]') %>% html_text() %>% str_extract('\\w+\\s\\d{4}')})
 ```
 
@@ -89,7 +89,7 @@ exam.data <- exam.list %>%
 ## Get all the file links
 Get all the nodes with file links.
 ```{r}
-hrefs <- doc %>% html_nodes(xpath = "////a[starts-with(@href, '/globalassets/assets/files/edu/')]/ancestor::td")
+hrefs <- doc %>% html_nodes(xpath = "//a[starts-with(@href, '/globalassets/assets/files/edu/')]/ancestor::td")
 ```
 
 Get all the files and links.
@@ -131,6 +131,13 @@ download.files <- function(df) {
     
     # download file
     download.file(link, path)
+    
+    # unzip file
+    if(str_ends(path, ".zip")) {
+      unzip(path, exdir = folder)
+      # delete the zip file
+      unlink(path)
+    }
   }
 }
 ```
