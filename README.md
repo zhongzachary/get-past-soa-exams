@@ -2,7 +2,7 @@
 
 Have you got tired of clicking all the links in SOA's website to download all the past exams? You come to the right place.
 
-This `R` script will scrap all the available files in [SOA's website](https://www.soa.org/education/exam-req/syllabus-study-materials/edu-multiple-choice-exam), and download it for you.
+This `R` script will scrape all the available files in [SOA's website](https://www.soa.org/education/exam-req/syllabus-study-materials/edu-multiple-choice-exam), and download it for you.
 
 All you need is `R` ([download here](https://cloud.r-project.org)) and `RStudio` ([download here](https://www.rstudio.com/products/rstudio/download/)). 
 You might also need some basic knowledge on how to run a `R Markdown` in `RStudio`.
