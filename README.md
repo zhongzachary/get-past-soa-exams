@@ -21,4 +21,4 @@ You might also need some basic knowledge on how to run a `R Markdown`.
   - All files will be downloaded in the same location as this `R` project.
   - There will be a folder for each exam sitting.
   - It should work for different operating systems.
-    <img width="882" alt="folder_structure" src="https://user-images.githubusercontent.com/43014071/138193205-648ec853-b200-40aa-8178-3f5e9de14dd2.png">
+    <img width="882" src="https://user-images.githubusercontent.com/43014071/138378268-2b818a61-9970-4134-8bdb-174ceda21417.png">
